@@ -1,3 +1,5 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 streamlit
 numpy
 pandas
@@ -12,10 +14,7 @@ bcrypt
 
 segno
 pillow
-
-
-
+torch==2.5.1+cpu
+torchaudio==2.5.1+cpu
 librosa
-# resemblyzer
-speechbrain 
-torchaudio
+speechbrain
