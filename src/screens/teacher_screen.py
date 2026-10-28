@@ -291,54 +291,63 @@ def teacher_screen_login():
             st.session_state.teacher_login_type='register'
             st.rerun()
 
-
 def register_teacher(teacher_username, teacher_name, teacher_password, teacher_password_cnfrm):
-    if not teacher_username or not teacher_name or not teacher_password:
+    # Ensure strings are stripped of surrounding whitespace
+    user = (teacher_username or "").strip()
+    name = (teacher_name or "").strip()
+    password = teacher_password or ""
+    confirmPassword = teacher_password_cnfrm or ""
+
+    if not user or not name or not password or not confirmPassword:
         return False, "All Fields are required!"
-    if teacher_password != teacher_password_cnfrm:
+    if password != confirmPassword:
         return False, "Password doesn't match"
     
     try:
-        if check_teacher_exists(teacher_username):
+        if check_teacher_exists(user):
             return False, "Username already taken"
-        create_teacher(teacher_username, teacher_password, teacher_name)
+        create_teacher(user, password, name)
         return True, "Successfully Created! Login Now"
     except Exception as e:
         return False, f"Unexpected Error: {e}"
 
+
 def teacher_screen_register():
-    c1,c2 = st.columns(2, vertical_alignment='center', gap='xxlarge')
+    c1, c2 = st.columns(2, vertical_alignment='center', gap='xxlarge')
     with c1:
         header_dashboard()
     with c2:
-        if st.button("Go back to Home", type='secondary', key='loginbackbtn', shortcut="control+backspace"):
+        if st.button("Go back to Home", type='secondary', key='reg_back_home_btn', shortcut="control+backspace"):
             st.session_state['login_type'] = None
             st.rerun()
+
     st.markdown('<h2 class="teacher-auth-title">Register your teacher profile</h2>', unsafe_allow_html=True)
-
     st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
-    st.space()
-    st.space()
-    teacher_username = st.text_input("Enter Username", placeholder='Your name')
-    teacher_name = st.text_input("Enter Your Name", placeholder='Your name')
-    teacher_password = st.text_input("Enter Password", placeholder='Enter password', type='password')
-    teacher_password_cnfrm = st.text_input("Confirm Your Password", placeholder='Enter password', type='password')
 
-    st.divider()
+    # Wrap registration in an st.form so all values are captured on submit
+    with st.form("teacher_register_form", clear_on_submit=False):
+        teacher_username = st.text_input("Enter Username", placeholder='Your username', key='reg_user_input')
+        teacher_name = st.text_input("Enter Your Name", placeholder='Your full name', key='reg_name_input')
+        teacher_password = st.text_input("Enter Password", placeholder='Enter password', type='password', key='reg_pass_input')
+        teacher_password_cnfrm = st.text_input("Confirm Your Password", placeholder='Re-enter password', type='password', key='reg_confirm_pass_input')
+        
+        st.divider()
 
-    btnc1,btnc2 = st.columns(2)
-    with btnc1:
-        if st.button('Register Now', icon=':material/passkey:', shortcut='control+enter', width='stretch'):
-            success, message = register_teacher(teacher_username, teacher_name, teacher_password, teacher_password_cnfrm)
-            if success:
-                st.success(message)
-                import time
-                time.sleep(2)
-                st.session_state.teacher_login_type="login"
-                st.rerun()
-            else:
-                st.error(message)
-    with btnc2:
-        if st.button('Login Instead', type='primary', icon=':material/passkey:',  width='stretch'):
-            st.session_state.teacher_login_type='login'
+        # Submit button must be st.form_submit_button inside a form
+        submitted = st.form_submit_button('Register Now', type='primary', icon=':material/passkey:', use_container_width=True)
+
+    if submitted:
+        success, message = register_teacher(teacher_username, teacher_name, teacher_password, teacher_password_cnfrm)
+        if success:
+            st.success(message)
+            import time
+            time.sleep(1.5)
+            st.session_state.teacher_login_type = "login"
             st.rerun()
+        else:
+            st.error(message)
+
+    # Put 'Login Instead' outside the form so clicking it doesn't trigger form validation
+    if st.button('Login Instead', type='secondary', icon=':material/login:', use_container_width=True):
+        st.session_state.teacher_login_type = 'login'
+        st.rerun()
